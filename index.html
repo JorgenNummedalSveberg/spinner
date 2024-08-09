@@ -1,60 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lit Web Component App</title>
+    <script type="module">
+      let playIndex = 0;
 
-<head>
-  <meta charset="UTF-8">
-  <title>Lit Web Component App</title>
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const input = document.getElementById('input');
-      const number = document.getElementById('number');
-      const myComponent = document.querySelector('my-component');
-      console.log(myComponent);
-      input.addEventListener('input', (event) => {
-        myComponent.setAttribute('symbols', event.target.value);
+      // all files in images folder
+      const list = Object.keys(import.meta.glob("./images/*.*"));
+
+      const play = () => {
+        const components = document.querySelectorAll("my-component");
+        if (playIndex > 0) {
+          components[playIndex - 1].stopPlaying();
+        } else {
+          for (const component of components) {
+            component.blinkArray = Array(list.length).fill(0);
+          }
+        }
+        if (playIndex >= components.length) {
+          const values = [...components].map((component) =>
+            component.value.split(",")
+          );
+          playIndex = 0;
+          console.log(values);
+          const scores = {};
+          for (const value of values.flat()) {
+            scores[value] = scores[value] ? scores[value] + 1 : 1;
+          }
+          // array of all symbols, 0 if score is not 3
+          const blinkArray = Array(list.length)
+            .fill(0)
+            .map((_, i) => (scores[i] && scores[i] >= 3 ? 1 : 0));
+          for (let i = 0; i < components.length; i++) {
+            components[i].blinkArray = blinkArray;
+          }
+          return;
+        }
+        components[playIndex].startPlaying();
+        playIndex++;
+      };
+      window.addEventListener("keydown", (event) => {
+        if (event.key === " ") {
+          play();
+        }
       });
-      number.addEventListener('input', (event) => {
-        console.log(event.target.value);
-        myComponent.setAttribute('visibleSymbols', event.target.value);
+      window.addEventListener("DOMContentLoaded", () => {
+        const input = document.getElementById("input");
+        const number = document.getElementById("number");
+        number.onchange = () => {
+          const slots = document.querySelector(".slots");
+          slots.innerHTML = "";
+          const components = Array.from(
+            { length: number.value },
+            (_, index) => {
+              const component = document.createElement("my-component", {});
+              slots.appendChild(component);
+              component.blinkArray = Array(list.length).fill(0);
+              component.classList.add("wheel");
+              component.setAttribute("valueRange", 2);
+              component.setAttribute("list.length", 10);
+              for (let i = 0; i < list.length; i++) {
+                const childString = `<img src="${list[i]}" slot=${i}>ello</div>`;
+                component.innerHTML += childString;
+              }
+              return component;
+            }
+          );
+          for (const component of components) {
+            component.addEventListener("input", (event) => {});
+          }
+        };
       });
-    });
-  </script>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-    }
+    </script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+      }
 
-    .wheel {
-      width: 200px;
-      height: 200px;
-    }
+      .wheel {
+        width: 75px;
+        height: 200px;
+      }
 
-    .slots {
-      display: flex;
-      gap: 1rem;
-    }
-  </style>
-</head>
+      .slots {
+        display: flex;
+        user-select: none;
+      }
+    </style>
+  </head>
 
-<body>
-  <script type="module" src="./index.js"></script>
-  <div>
-    <label for="input">Enter symbols</label>
-    <input type="text" id="input" placeholder="symbols" />
-  </div>
-  <div>
-    <label for="number">Number of visible faces</label>
-    <input type="number" id="number" placeholder="number" />
-  </div>
-  <div class="slots">
-    <my-component symbols="🚗,🚓,🚕,🛺,🚙,🚌,🚐,🚎" class="wheel"></my-component>
-    <my-component symbols="🚗,🚓,🚕,🛺,🚙,🚌,🚐,🚎" class="wheel"></my-component>
-    <my-component symbols="🚗,🚓,🚕,🛺,🚙,🚌,🚐,🚎" class="wheel"></my-component>
-  </div>
-</body>
-
+  <body>
+    <script type="module" src="./index.js"></script>
+    <div>
+      <label for="input">Enter symbols</label>
+      <input type="text" id="input" placeholder="symbols" />
+    </div>
+    <div>
+      <label for="number">Number of visible faces</label>
+      <input type="number" id="number" placeholder="number" />
+    </div>
+    <div class="slots"></div>
+  </body>
 </html>
